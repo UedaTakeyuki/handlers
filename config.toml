@@ -1,0 +1,28 @@
+#[[sources]]
+#  name   = "dht22"
+#  errorhandler = "errorhandler"
+#  [[sources.values]]
+#    name = "temp"
+#    handlers = [
+#      "send"#import os, "save"
+#    ]
+#  [[sources.values]]
+#    name = "humidity"
+#    handlers = [
+#      "send"#, "save"
+#    ]
+#  [[sources.values]]
+#    name = "humiditydeficit"
+#    handlers = [
+#      "send"#, "save"
+#    ]
+
+
+[[sensors]]
+  handler   = "mh_z19"
+  [[sensors.values]]
+    name = "co2"
+    handlers = [
+      "sender.monitor.send",# "save"
+      "sender.m2x.send"
+  ]
