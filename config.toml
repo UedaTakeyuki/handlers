@@ -23,6 +23,7 @@
   [[sensors.values]]
     name = "co2"
     handlers = [
-      "sender.monitor.send",# "save"
-      "sender.m2x.send"
+#      "sender.monitor.send",# "save"
+#      "sender.m2x.send",
+#      "saver.strage.save"
   ]
