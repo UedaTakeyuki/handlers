@@ -4,7 +4,7 @@ import traceback
 import requests
 import ConfigParser
 import subprocess
-from incremental_counter import Counter
+from error_counter import Counter
 from m2x.client import M2XClient
 
 # Const
@@ -24,18 +24,13 @@ er_on = str2bool(ini.get("error_recovery", "recover_on")) # error_recovery
 if er_on:
   c = Counter(ini.get("error_recovery", "counterfile"))
 
-def reset_device():
-  global ini
-  subprocess.Popen(ini.get("error_recovery", "recover_command"), shell=True)
-
-def inc_network_ioerror():
-  global c, ini
-  if c.inc() >= int(ini.get("error_recovery", "threshold")):
-    reset_device()
-
-def reset_network_ioerror():
-  global c, ini
-  c.reset()
+# error_counter
+if er_on:
+  error_counter = Counter(ini.get("error_recovery", "counterfile"))
+#  error_counter = Counter(ini.get("error_recovery", "counterfile"), 
+#                          ini.get("error_recovery", "recover_command"), 
+#                          int(ini.get("error_recovery", "threshold"))
+#                          )
 
 def error_report():
   info=sys.exc_info()
@@ -54,12 +49,12 @@ def handle(data_source_name, data_name, value):
         stream = device.stream(stream_id)
         print (stream.add_value(value))
         if er_on:
-          reset_network_ioerror()
+          error_counter.reset_error()
   except requests.ConnectionError as e:
     error_report()
     if er_on:
-      inc_network_ioerror()
+      error_counter.inc_error()
   except:
     error_report()
     if er_on:
-      reset_network_ioerror()
+      error_counter.reset_error()
