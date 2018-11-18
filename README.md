@@ -2,5 +2,5 @@
 sample handlers of [PondSlider](https://github.com/UedaTakeyuki/pondslider)
 
 ## folder
-- sensor: Sample sensor handlers
-- value: Sample value handlers
+- [sensor](https://github.com/UedaTakeyuki/handlers/tree/master/sensor): Sample sensor handlers
+- [value](https://github.com/UedaTakeyuki/handlers/tree/master/value): Sample value handlers
