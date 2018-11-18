@@ -8,7 +8,7 @@ from incremental_counter import Counter
 from m2x.client import M2XClient
 
 # Const
-configfile = os.path.dirname(os.path.abspath(__file__))+'/send.ini'
+configfile = os.path.dirname(os.path.abspath(__file__))+'/send2m2x.ini'
 
 # get settings
 ini = ConfigParser.SafeConfigParser()
