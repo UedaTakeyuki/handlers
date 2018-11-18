@@ -13,10 +13,11 @@ import requests
 import ConfigParser
 import inspect
 
-from incremental_counter import Counter
+import incremental_counter
+import error_counter
 
 # Const
-configfile = os.path.dirname(os.path.abspath(__file__))+'/save.ini'
+configfile = os.path.dirname(os.path.abspath(__file__))+'/save2strage.ini'
 
 # get settings
 if not os.path.exists(configfile):
@@ -36,32 +37,19 @@ if not "error_recovery" in ini.sections():
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
-if "recover_on" in ini.items("error_recovery"):
+if "recover_on" in dict(ini.items("error_recovery")).keys():
     er_on = str2bool(ini.get("error_recovery", "recover_on")) # error_recovery
 else:
     er_on = False
 
-if "log_file" in ini.items("log"):
+if "log_file" in dict(ini.items("log")).keys():
     log_on = True
 else:
     log_on = False
 
 # error_counter
 if er_on:
-    c = Counter(ini.get("error_recovery", "counterfile"))
-
-def reset_device():
-    global ini
-    subprocess.Popen(ini.get("error_recovery", "recover_command"), shell=True)
-
-def inc_file_ioerror():
-    global c, ini
-    if c.inc() >= int(ini.get("error_recovery", "threshold")):
-        reset_device()
-
-def reset_file_ioerror():
-    global c, ini
-    c.reset()
+    error_counter = error_counter.Counter(ini.get("error_recovery", "counterfile"))
 
 # path to save
 data_path = ini.get("save", "data_path")
@@ -95,7 +83,7 @@ def handle(data_source_name, data_name, value):
 #        now = datetime.datetime.utcnow()
         now_string = now.isoformat()
         path = data_path+"/"+data_name+".csv"
-        linecounter = Counter(data_path+"/"+data_name+".counter.txt")
+        linecounter = incremental_counter.Counter(data_path+"/"+data_name+".counter.txt")
         linecount = linecounter.inc()
         line = "{},{},{}".format(linecount, now_string, str(value))
         f = open(path, 'a')
@@ -104,13 +92,15 @@ def handle(data_source_name, data_name, value):
         f.close()    
         msg_log("end saving...")
         if er_on:
-            reset_file_ioerror()
+            error_counter.inc_error()
     except IOError:
-        msg_err_log(traceback.format_exc(info[0]))
+#        msg_err_log(sys.exc_info())
+        logging.exception('')
         if er_on:
-            inc_file_ioerror()
+            error_counter.reset_error()
     except:
-        msg_err_log(traceback.format_exc(info[0]))
+#        msg_err_log(sys.exc_info())
+        logging.exception('')
         if er_on:
-            reset_file_ioerror()
+            error_counter.reset_error()
 
