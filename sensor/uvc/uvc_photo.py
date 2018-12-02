@@ -85,9 +85,8 @@ def is_photo_source(sensor_handlers):
 def handle(sensor_handlers, data_name, value):
   print ("start handle")
   if is_photo_source(sensor_handlers):
-    viewid = "yplwnrwx"
     files = {'upfile': open(value, 'rb')}
-    payload = {'viewid': viewid}
+    payload = {'viewid': ini.get("server", "view_id")}
     r = requests.post(ini.get("server", "url"), data=payload, files=files, timeout=10, verify=False)
   print ("end handle")
 def terminate(sensor_handlers, data_name, value):
