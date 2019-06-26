@@ -8,6 +8,7 @@ import ConfigParser
 import datetime
 import requests
 import urllib3
+from error_counter import Counter
 from urllib3.exceptions import InsecureRequestWarning
 # refer http://73spica.tech/blog/requests-insecurerequestwarning-disable/
 urllib3.disable_warnings(InsecureRequestWarning)
@@ -22,8 +23,15 @@ settings = {
   "delay":  "1",
   "skip":   "20",
   "width":  "320",
-  "hight":  "240"
+  "hight":  "240",
+  "er_on":  False,
+  "read_error_counter": "",
+  "send_error_counter": ""
 }
+
+# https://code.i-harness.com/en/q/aea99
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
 
 # termination type
 TERMINATOR_DELETEVALUE_AS_FILE=True
@@ -50,6 +58,17 @@ def setconfig(ini):
     if "hight"  in dict(ini.items("photo")).keys() and ini.get("photo","hight"):
       settings["hight"] = ini.get("photo","hight")
 
+  if "error_recovery" in ini.sections():
+    if "recover_on" in dict(ini.items("error_recovery")).keys() and ini.get("error_recovery","recover_on"):
+      settings["er_on"] = str2bool(ini.get("error_recovery", "recover_on")) # error_recovery
+    # error_counter
+    if settings["er_on"]:
+      if "readcounterfile" in dict(ini.items("error_recovery")).keys() and ini.get("error_recovery","readcounterfile"):
+        settings["read_error_counter"] = Counter(ini.get("error_recovery", "readcounterfile"))
+      if "readcounterfile" in dict(ini.items("error_recovery")).keys() and ini.get("error_recovery","sendcounterfile"):
+        settings["send_error_counter"] = Counter(ini.get("error_recovery", "sendcounterfile"))
+
+
 if os.path.exists(configfile):
   ini = ConfigParser.SafeConfigParser()
   ini.read(configfile)
@@ -62,7 +81,7 @@ def take_photo():
   if os.path.exists(filepath): # remove if old version exist
     os.remove(filepath)
 
-  command_str = "fswebcam {} -d {} -D {} -S {} -r {}x{}".format(filepath,
+  command_str = "fswebcam --no-timestamp --title \"©Atelier UEDA\" {} -d {} -D {} -S {} -r {}x{}".format(filepath,
                                                                   settings["device"],
                                                                   settings["delay"],
                                                                   settings["skip"],
@@ -72,7 +91,12 @@ def take_photo():
   p.wait() # wait for finish.
 
   if not os.path.exists(filepath): # Camera IO erro
-    raise IOError(''.join(p.stderr.readlines()))
+#    raise IOError(''.join(p.stderr.readlines()))
+    if settings["er_on"]:
+      settings["read_error_counter"].inc_error()
+  else:
+    if settings["er_on"]:
+      settings["read_error_counter"].reset_error()
 
   return filepath
 
@@ -87,8 +111,21 @@ def handle(sensor_handlers, data_name, value):
   if is_photo_source(sensor_handlers):
     files = {'upfile': open(value, 'rb')}
     payload = {'viewid': ini.get("server", "view_id")}
-    r = requests.post(ini.get("server", "url"), data=payload, files=files, timeout=10, verify=False)
+
+    r = None
+    try:
+      r = requests.post(ini.get("server", "url"), data=payload, files=files, timeout=10, verify=False)
+    except:
+      if settings["er_on"]:
+        settings["send_error_counter"].inc_error()
+
+    if not r is None:
+      if settings["er_on"]:
+        settings["send_error_counter"].reset_error()
+      print r.text
+
   print ("end handle")
+
 def terminate(sensor_handlers, data_name, value):
   print ("start terminate")
   if is_photo_source(sensor_handlers):
