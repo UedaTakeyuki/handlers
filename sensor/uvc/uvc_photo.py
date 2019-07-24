@@ -8,6 +8,7 @@ import ConfigParser
 import datetime
 import requests
 import urllib3
+import shutil
 from error_counter import Counter
 from urllib3.exceptions import InsecureRequestWarning
 # refer http://73spica.tech/blog/requests-insecurerequestwarning-disable/
@@ -67,6 +68,8 @@ def setconfig(ini):
         settings["read_error_counter"] = Counter(ini.get("error_recovery", "readcounterfile"))
       if "readcounterfile" in dict(ini.items("error_recovery")).keys() and ini.get("error_recovery","sendcounterfile"):
         settings["send_error_counter"] = Counter(ini.get("error_recovery", "sendcounterfile"))
+      if "savecounterfile" in dict(ini.items("error_recovery")).keys() and ini.get("error_recovery","savecounterfile"):
+        settings["save_error_counter"] = Counter(ini.get("error_recovery", "savecounterfile"))
 
 
 if os.path.exists(configfile):
@@ -124,7 +127,24 @@ def handle(sensor_handlers, data_name, value):
         settings["send_error_counter"].reset_error()
       print r.text
 
+    save(ini.get("server", "view_id"), value)
+
   print ("end handle")
+
+def save(viewid, picfilepath):
+    try:
+        # make saving folder
+        base_of_saving_folder = ini.get("save", "data_path")
+        saving_folder = base_of_saving_folder + "/" + viewid
+        if not os.path.exists(saving_folder):
+          os.makedirs(saving_folder)
+        shutil.copyfile(picfilepath, saving_folder + "/" + os.path.basename(picfilepath))
+    except:
+      if settings["er_on"]:
+        settings["save_error_counter"].inc_error()
+
+    if settings["er_on"]:
+      settings["save_error_counter"].reset_error()
 
 def terminate(sensor_handlers, data_name, value):
   print ("start terminate")
