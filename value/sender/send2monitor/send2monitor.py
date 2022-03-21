@@ -4,7 +4,8 @@ import os
 import sys
 import traceback
 import requests
-import ConfigParser
+#import ConfigParser
+import configparser
 import subprocess
 from error_counter import Counter
 import urllib3
@@ -16,7 +17,7 @@ urllib3.disable_warnings(InsecureRequestWarning)
 configfile = os.path.dirname(os.path.abspath(__file__))+'/send2monitor.ini'
 
 # get settings
-ini = ConfigParser.SafeConfigParser()
+ini = configparser.SafeConfigParser()
 ini.read(configfile)
 
 # https://code.i-harness.com/en/q/aea99
@@ -54,5 +55,5 @@ def handle(data_source_name, data_name, value):
   if not r is None:
     if er_on:
       error_counter.reset_error()
-    print r.text
+    print (r.text)
 
