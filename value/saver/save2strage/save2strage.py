@@ -10,7 +10,7 @@ import traceback
 
 import requests
 
-import ConfigParser
+import configparser
 import inspect
 
 import incremental_counter
@@ -23,7 +23,7 @@ configfile = os.path.dirname(os.path.abspath(__file__))+'/save2strage.ini'
 if not os.path.exists(configfile):
     raise IOError("no config file!")
 
-ini = ConfigParser.SafeConfigParser()
+ini = configparser.SafeConfigParser()
 ini.read(configfile)
 
 if not "save" in ini.sections():
@@ -67,14 +67,14 @@ if log_on:
 #    logging.basicConfig(format='%(asctime)s %(filename)s %(lineno)d %(levelname)s %(message)s',filename=logfile,level=logging.DEBUG)
 
 def msg_log(msg_str):
-    print str(inspect.currentframe(1).f_lineno) + " " + msg_str
+    print (str(inspect.currentframe().f_lineno) + " " + msg_str)
     if log_on: 
-        logging.info(str(inspect.currentframe(1).f_lineno) + " " + msg_str)
+        logging.info(str(inspect.currentframe().f_lineno) + " " + msg_str)
 
 def msg_err_log(msg_str):
-    print str(inspect.currentframe(1).f_lineno) + " " + msg_str
+    print (str(inspect.currentframe().f_lineno) + " " + msg_str)
     if log_on: 
-        logging.error(str(inspect.currentframe(1).f_lineno) + " " + msg_str)
+        logging.error(str(inspect.currentframe().f_lineno) + " " + msg_str)
 
 def handle(data_source_name, data_name, value):
     try:
@@ -88,7 +88,8 @@ def handle(data_source_name, data_name, value):
         line = "{},{},{}".format(linecount, now_string, str(value))
         f = open(path, 'a')
         msg_log(line)
-        print >> f, line
+#        print >> f, line
+        print (line, file=f)
         f.close()    
         msg_log("end saving...")
         if er_on:
