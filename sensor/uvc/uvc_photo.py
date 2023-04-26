@@ -2,9 +2,18 @@
 # original: https://raw.githubusercontent.com/UedaTakeyuki/slider/master/mh_z19.py
 #
 # © Takeyuki UEDA 2015 -
+import platform
+
+# major version of running python
+p_ver = platform.python_version_tuple()[0]
+
+
 import os
 import subprocess
-import ConfigParser
+if p_ver == '2':
+  import ConfigParser
+else: 
+  import configparser
 import datetime
 import requests
 import urllib3
@@ -73,7 +82,11 @@ def setconfig(ini):
 
 
 if os.path.exists(configfile):
-  ini = ConfigParser.SafeConfigParser()
+  if p_ver == '2':
+    ini = ConfigParser.SafeConfigParser()
+  else: 
+    ini = configparser.SafeConfigParser()
+#  ini = ConfigParser.SafeConfigParser()
   ini.read(configfile)
   setconfig(ini)
 
@@ -125,7 +138,7 @@ def handle(sensor_handlers, data_name, value):
     if not r is None:
       if settings["er_on"]:
         settings["send_error_counter"].reset_error()
-      print r.text
+      print (r.text)
 
     save(ini.get("server", "view_id"), value)
 
